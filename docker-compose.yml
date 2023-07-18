@@ -1,0 +1,485 @@
+version: "3.9"
+
+networks:
+  containernet:
+    ipam:
+      config:
+        - subnet: $SUBNET
+
+secrets:
+  # secret name also used to name the file exposed within the container
+  cf_api_key:
+    # path on the host ( $ echo xxxxx > ./secrets/cf_api_key.secret)
+    file: ${SECRETS_DIR}/cf_api_key.secret
+  cf_api_email:
+    file: ${SECRETS_DIR}/cf_api_email.secret
+
+  
+
+services:
+
+# Radarr - Movie management
+  radarr:
+    image: lscr.io/linuxserver/radarr
+    container_name: radarr
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    networks:
+      - containernet
+    ports:
+      - "7878:7878"
+    volumes:
+      - ${APPDATA_DIR}/radarr:/config
+      - ${MEDIA_DIR}/Movies:/data
+      - ${DOWNLOAD_DIR}:/downloads
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls.certresolver=myresolver"
+      - homepage.group=Media
+      - homepage.name=Radarr
+      - homepage.icon=radarr.png
+      - homepage.href=https://radarr.${DOMAIN_NAME}
+      - homepage.description=Manage Movies
+
+
+# Sonarr - TV Shows management
+  sonarr:
+    image: lscr.io/linuxserver/sonarr
+    container_name: sonarr
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    networks:
+      - containernet
+    ports:
+      - "8989:8989"
+    volumes:
+      - ${APPDATA_DIR}/sonarr:/config
+      - ${MEDIA_DIR}/TV:/data
+      - ${DOWNLOAD_DIR}:/downloads
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=myresolver"
+      - homepage.group=Media
+      - homepage.name=Sonarr
+      - homepage.icon=sonarr.png
+      - homepage.href=https://sonarr.${DOMAIN_NAME}
+      - homepage.description=Manage Shows & Episodes
+
+# Readarr - Books management
+  # Set url_base in readarr settings if using PathPrefix
+  readarr:
+    image: hotio/readarr:nightly
+    container_name: readarr
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    networks:
+      - containernet
+    ports:
+      - "8787:8787"
+    volumes:
+      - ${APPDATA_DIR}/readarr:/config
+      - ${MEDIA_DIR}/Books:/data
+      - ${DOWNLOAD_DIR}:/downloads
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.readarr.entrypoints=websecure"
+      - "traefik.http.routers.readarr.tls.certresolver=myresolver"
+      - homepage.group=Media
+      - homepage.name=Readarr
+      - homepage.icon=readarr.png
+      - homepage.href=https://readarr.${DOMAIN_NAME}
+      - homepage.description=Manage Books and Audiobooks
+
+
+  # Prowlarr - Torrent proxy
+  prowlarr:
+    image: ghcr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - containernet
+    ports:
+      - "9696:9696"
+    volumes:
+      - ${APPDATA_DIR}/prowlarr:/config
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls.certresolver=myresolver"
+      - homepage.group=Utilities
+      - homepage.name=Prowlarr
+      - homepage.icon=prowlarr.png
+      - homepage.href=https://prowlarr.${DOMAIN_NAME}
+      - homepage.description=Torrent Automation Indexer
+
+
+  plex:
+    image: plexinc/pms-docker:public
+    container_name: plex
+    restart: unless-stopped
+    networks:
+      - containernet
+    ports:
+      - "32400:32400/tcp"
+      - "3005:3005/tcp"
+      - "8324:8324/tcp"
+      - "32469:32469/tcp"
+      - "1900:1900/udp"
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+      # - "33400:33400" # If you use Plex Web Tools
+    devices:
+      - /dev/dri:/dev/dri # for hardware transcoding
+    volumes:
+      - $APPDATA_DIR/plex:/config
+      - $MEDIA_DIR:/media
+      - $LOG_DIR/plex:/logs
+      - /dev/shm:/transcode
+    environment:
+      TZ: $TZ
+      HOSTNAME: "abePlex"
+      PLEX_CLAIM: $PLEX_CLAIM
+      PLEX_UID: $PUID
+      PLEX_GID: $PGID
+      ADVERTISE_IP: http://$SERVER_IP:32400/,https://plex.${DOMAIN_NAME}
+      ALLOWED_NETWORKS: $LOCAL_NETWORK
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls.certresolver=myresolver"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+      - homepage.group=Streaming
+      - homepage.name=Plex
+      - homepage.icon=plex.png
+      - homepage.href=https://plex.${DOMAIN_NAME}
+      - homepage.description=Plex Media Streaming
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    hostname: sabnzbd
+    networks:
+      - containernet
+    ports:
+      - "8084:8080"
+    volumes:
+      - $APPDATA_DIR/sabnzbd:/config
+      - $DOWNLOAD_DIR:/data/downloads
+    environment:
+      PUID: $PUID
+      PGID: $PGID
+      TZ: $TZ
+      UMASK_SET: 002
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.sabnzbd.entrypoints=websecure"
+      - "traefik.http.routers.sabnzbd.tls.certresolver=myresolver"
+      - homepage.group=Media
+      - homepage.name=Sabnzbd
+      - homepage.icon=sabnzbd.png
+      - homepage.href=https://sabnzbd.${DOMAIN_NAME}
+      - homepage.description=Usenet
+      - homepage.weight=6
+
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - containernet
+    ports:
+      - "8085:8085"
+      - 6881:6881
+      - 6881:6881/udp
+    volumes:
+      - $APPDATA_DIR/qbittorrent:/config
+      - $DOWNLOAD_DIR:/downloads
+    environment:
+      PUID: $PUID
+      PGID: $PGID
+      TZ: $TZ
+      UMASK: 002
+      WEBUI_PORT: 8085
+    labels:
+      - homepage.group=Download
+      - homepage.name=qBittorent
+      - homepage.icon=qbittorrent.png
+      - homepage.href=https://qbittorent.${DOMAIN_NAME}
+      - homepage.description=Torrents
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=myresolver"
+      - "traefik.http.services.qbittorent.loadbalancer.server.port=8085"
+
+
+
+  homepage:
+    image: ghcr.io/benphelps/homepage:latest
+    container_name: homepage
+    networks:
+      - containernet
+    ports:
+      - 3000:3000
+    volumes:
+      - $APPDATA_DIR/homepage:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations, see alternative methods
+    environment:
+      #PUID: $PUID
+      #PGID: $PGID
+      TZ: $TZ
+      #UMASK: 002
+      LOG_LEVEL: debug
+    labels:
+      - "homepage.title=abeNet homePage"
+      - "homepage.layout.Media.style=row"
+      - "homepage.layout.Media.columns=3"
+      - "homepage.layout.Download.style=row"
+      - "homepage.layout.Download.columns=2"
+      - "homepage.quicklaunch.searchDescriptions=true"
+      - "homepage.quicklaunch.hideInternetSearch=true"
+      - "homepage.quicklaunch.hideVisitURL=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=myresolver"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+
+
+  # Dozzle - Real-time Docker Log Viewer
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    networks:
+      - containernet
+    ports:
+      - "8082:8080"
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: 300
+      DOZZLE_FILTER: "status=running"
+      # DOZZLE_FILTER: "label=log_me" # limits logs displayed to containers with this label
+      PUID: $PUID
+      PGID: $PGID
+      TZ: $TZ
+      UMASK: 002
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
+      # Use Docker Socket Proxy instead for improved security
+      # One day...maybe
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls.certresolver=myresolver"
+      - "traefik.http.services.dozzle-svc.loadbalancer.server.port=8080"
+      - homepage.group=Utilities
+      - homepage.name=Dozzle
+      - homepage.icon=dozzle.png
+      - homepage.href=https://dozzle.${DOMAIN_NAME}
+      - homepage.description=Container Log Viewer
+  
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    # command: -H unix:///var/run/docker.sock 
+    # Use Docker Socket Proxy instead for improved security
+    # command: -H tcp://socket-proxy:2375
+    networks:
+      - containernet
+    ports:
+      - 9000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # # Use Docker Socket Proxy instead for improved security
+      - $APPDATA_DIR/portainer/data:/data # Change to local directory if you want to save/transfer config locally
+    environment:
+      PUID: $PUID
+      PGID: $PGID
+      TZ: $TZ
+      UMASK: 002
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+      - homepage.group=Utilities
+      - homepage.name=Portainer
+      - homepage.icon=portainer.png
+      - homepage.href=https://portainer.${DOMAIN_NAME}
+      - homepage.description=Docker Overview UI
+
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    networks:
+      - containernet
+    ports:
+      - "8181:8181"
+    volumes:
+      - $APPDATA_DIR/tautulli/config:/config
+      - $LOG_DIR/appdata/plexms/Library/Application Support/Plex Media Server/Logs:/logs:ro # For tautulli Plex log viewer
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.tautulli.entrypoints=websecure"
+      - "traefik.http.routers.tautulli.tls.certresolver=myresolver"
+      - "traefik.http.services.tautulli-svc.loadbalancer.server.port=8181"
+      - homepage.group=Utilities
+      - homepage.name=Tautulli
+      - homepage.icon=tautulli.png
+      - homepage.href=https://tautulli.${DOMAIN_NAME}
+      - homepage.description=Plex Server Statistics
+
+
+  traefik:
+    image: "traefik:latest"
+    container_name: "traefik"
+    command:
+      - --global.checkNewVersion=true
+      - --global.sendAnonymousUsage=true
+      - "--log.level=${LOG_LEVEL}"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entryPoints='Name:http Address::80 Redirect.EntryPoint:https'"
+
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
+      #For staging and building fake CA's when testing... 
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+
+      # Allow these IPs to set the X-Forwarded-* headers - Cloudflare IPs: https://www.cloudflare.com/ips/
+      - --entrypoints.https.forwardedHeaders.trustedIPs=$CLOUDFLARE_IPS,$LOCAL_IPS
+      - --entryPoints.traefik.address=:8080
+      - --api=true
+      - --api.insecure=true
+      - --api.dashboard=true
+      # - --serversTransport.insecureSkipVerify=true
+      - --log=true
+      - --log.filePath=/logs/traefik.log
+      - --accessLog=true
+      - --accessLog.filePath=/logs/access.log
+      - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
+      - --accessLog.filters.statusCodes=204-299,400-499,500-599
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock # Use Docker Socket Proxy instead for improved security
+      # - --providers.docker.endpoint=tcp://socket-proxy:2375 # Use this instead of the previous line if you have socket proxy.
+      - --providers.docker.exposedByDefault=false
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      #- --entrypoints.https.http.tls.options=tls-opts@file
+      # Add dns-cloudflare as default certresolver for all services. Also enables TLS and no need to specify on individual services
+      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
+      - --entrypoints.https.http.tls.domains[0].main=$DOMAIN_NAME
+      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAIN_NAME
+      # - --entrypoints.https.http.tls.domains[1].main=$DOMAINNAME2 # Pulls main cert for second domain
+      # - --entrypoints.https.http.tls.domains[1].sans=*.$DOMAINNAME2 # Pulls wildcard cert for second domain
+      - --providers.docker.network=containernet
+      - --providers.docker.swarmMode=false
+      - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
+      # - --providers.file.filename=/path/to/file # Load dynamic configuration from a file
+      - --providers.file.watch=true # Only works on top level files in the rules folder
+      - --certificatesResolvers.dns-cloudflare.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+      - --certificatesResolvers.dns-cloudflare.acme.email=${ACME_EMAIL}
+      - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    secrets:
+      - cf_api_key
+      - cf_api_email
+    # expose the path to file provided by docker containing the value we want for ENDPOINT.
+    environment:
+      CF_API_KEY_FILE: /run/secrets/cf_api_key
+      CF_API_EMAIL_FILE: /run/secrets/cf_api_email
+
+    volumes:
+      - "${APPDATA_DIR}/letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${APPDATA_DIR}/logs/traefik:/logs"
+
+    networks:
+      - containernet
+    labels:
+      - homepage.group=Utilities
+      - homepage.name=Traefik
+      - homepage.icon=traefik.png
+      - homepage.href=https://traefik.${DOMAIN_NAME}
+      - homepage.description=Traefik Dashboard
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+
+    networks:
+      - containernet
