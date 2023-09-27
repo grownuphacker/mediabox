@@ -230,8 +230,8 @@ services:
       - containernet
     ports:
       - "8085:8085"
-      - 6881:6881
-      - 6881:6881/udp
+      - 58781:58781 
+      - 58781:58781/udp
     volumes:
       - $APPDATA_DIR/qbittorrent:/config
       - $DOWNLOAD_DIR:/downloads
