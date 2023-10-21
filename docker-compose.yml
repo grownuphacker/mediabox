@@ -48,6 +48,9 @@ services:
       - homepage.icon=radarr.png
       - homepage.href=https://radarr.${DOMAIN_NAME}
       - homepage.description=Manage Movies
+      - homepage.widget.type=radarr
+      - homepage.widget.url=https://radarr.${DOMAIN_NAME}
+      - homepage.widget.key=${HOMEPAGE_VAR_RADARR_KEY}
 
 
 # Sonarr - TV Shows management
@@ -80,6 +83,9 @@ services:
       - homepage.icon=sonarr.png
       - homepage.href=https://sonarr.${DOMAIN_NAME}
       - homepage.description=Manage Shows & Episodes
+      - homepage.widget.type=sonarr
+      - homepage.widget.url=https://sonarr.${DOMAIN_NAME}
+      - homepage.widget.key=${HOMEPAGE_VAR_SONARR_KEY}
 
 # Readarr - Books management
   # Set url_base in readarr settings if using PathPrefix
@@ -95,7 +101,7 @@ services:
       - "8787:8787"
     volumes:
       - ${APPDATA_DIR}/readarr:/config
-      - ${MEDIA_DIR}/Books:/data
+      - ${MEDIA_DIR}/Literature:/data
       - ${DOWNLOAD_DIR}:/downloads
       - "/etc/localtime:/etc/localtime:ro"
     environment:
@@ -112,7 +118,42 @@ services:
       - homepage.icon=readarr.png
       - homepage.href=https://readarr.${DOMAIN_NAME}
       - homepage.description=Manage Books and Audiobooks
-
+      - homepage.widget.type=readarr
+      - homepage.widget.url=https://readarr.${DOMAIN_NAME}
+      - homepage.widget.key=${HOMEPAGE_VAR_READARR_KEY}
+  
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: audiobookshelf
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    networks:
+      - containernet
+    environment:
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+    ports:
+      - 13378:80
+    volumes:
+      - ${MEDIA_DIR}/Literature/Audiobooks:/audiobooks
+      - ${MEDIA_DIR}/Literature/Podcasts:/podcasts
+      - ${APPDATA_DIR}/audiobookshelf/config:/config
+      - ${APPDATA_DIR}/audiobookshelf/metadata:/metadata
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.audiobookshelf.entrypoints=websecure"
+      - "traefik.http.routers.audiobookshelf.tls.certresolver=myresolver"
+      - homepage.group=Media
+      - homepage.name=Audiobookshelf
+      - homepage.icon=audiobookshelf.png
+      - homepage.href=https://audiobookshelf.${DOMAIN_NAME}
+      - homepage.description=Audiobook Player
+      - homepage.widget.type=audiobookshelf
+      - homepage.widget.url=https://audiobookshelf.${DOMAIN_NAME}
+      - homepage.widget.key=${HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}
 
   # Prowlarr - Torrent proxy
   prowlarr:
@@ -187,6 +228,9 @@ services:
       - homepage.icon=plex.png
       - homepage.href=https://plex.${DOMAIN_NAME}
       - homepage.description=Plex Media Streaming
+      - "homepage.widget.type=tautulli"
+      - "homepage.widget.url=https://tautulli.${DOMAIN_NAME}"
+      - "homepage.widget.key=${HOMEPAGE_VAR_TAUTULLI_KEY}"
 
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
@@ -201,7 +245,7 @@ services:
       - "8084:8080"
     volumes:
       - $APPDATA_DIR/sabnzbd:/config
-      - $DOWNLOAD_DIR:/data/downloads
+      - $DOWNLOAD_DIR:/downloads
     environment:
       PUID: $PUID
       PGID: $PGID
@@ -218,6 +262,9 @@ services:
       - homepage.href=https://sabnzbd.${DOMAIN_NAME}
       - homepage.description=Usenet
       - homepage.weight=6
+      - homepage.widget.type=sabnzbd
+      - homepage.widget.url=https://sabnzbd.${DOMAIN_NAME}
+      - homepage.widget.key=${HOMEPAGE_VAR_SABNZBD_KEY}
 
 
   qbittorrent:
@@ -243,20 +290,24 @@ services:
       WEBUI_PORT: 8085
     labels:
       - homepage.group=Download
-      - homepage.name=qBittorent
+      - homepage.name=qBittorrent
       - homepage.icon=qbittorrent.png
-      - homepage.href=https://qbittorent.${DOMAIN_NAME}
+      - homepage.href=https://qbittorrent.${DOMAIN_NAME}
       - homepage.description=Torrents
       - "traefik.enable=true"
       - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN_NAME}`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
       - "traefik.http.routers.qbittorrent.tls.certresolver=myresolver"
-      - "traefik.http.services.qbittorent.loadbalancer.server.port=8085"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8085"
+      - homepage.widget.type=qbittorrent
+      - homepage.widget.url=https://qbittorrent.${DOMAIN_NAME}
+      - homepage.widget.username=${HOMEPAGE_VAR_QBITTORRENT_USERNAME}
+      - homepage.widget.password=${HOMEPAGE_VAR_QBITTORRENT_PASSWORD}
 
 
 
   homepage:
-    image: ghcr.io/benphelps/homepage:latest
+    image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     networks:
       - containernet
@@ -280,6 +331,7 @@ services:
       - "homepage.quicklaunch.searchDescriptions=true"
       - "homepage.quicklaunch.hideInternetSearch=true"
       - "homepage.quicklaunch.hideVisitURL=true"
+
       - "traefik.enable=true"
       - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN_NAME}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
@@ -353,6 +405,40 @@ services:
       - homepage.href=https://portainer.${DOMAIN_NAME}
       - homepage.description=Docker Overview UI
 
+  speedtest-tracker:
+      container_name: speedtest-tracker
+      ports:
+          - '8086:80'
+          - '8446:443'
+      environment:
+          - PUID=$PUID
+          - PGID=$PGID
+          - DB_CONNECTION=mysql
+          - DB_HOST=db
+          - DB_PORT=3306
+          - DB_DATABASE=speedtest_tracker
+          - DB_USERNAME=speedy
+          - DB_PASSWORD=password
+          - TZ=$TZ
+      volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '${APPDATA_DIR}/speedtest/config:/config'
+          - '${APPDATA_DIR}/speedtest/web:/etc/ssl/web'
+      image: 'ghcr.io/alexjustesen/speedtest-tracker:latest'
+      restart: unless-stopped
+      depends_on:
+          - db
+  db:
+      image: mariadb:10
+      restart: always
+      environment:
+          - MARIADB_DATABASE=speedtest_tracker
+          - MARIADB_USER=speedy
+          - MARIADB_PASSWORD=password
+          - MARIADB_RANDOM_ROOT_PASSWORD=true
+      volumes:
+          - speedtest-db:/var/lib/mysql
+
   tautulli:
     image: lscr.io/linuxserver/tautulli:latest
     container_name: tautulli
@@ -381,7 +467,6 @@ services:
       - homepage.icon=tautulli.png
       - homepage.href=https://tautulli.${DOMAIN_NAME}
       - homepage.description=Plex Server Statistics
-
 
   traefik:
     image: "traefik:latest"
@@ -480,6 +565,8 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN_NAME}`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
-
     networks:
       - containernet
+
+volumes:
+  speedtest-db:
