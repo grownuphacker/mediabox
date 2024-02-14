@@ -1,0 +1,23 @@
+{"timestamp":"2024-01-08 01:42:49.244","source":"Logger.js:115","message":"=== Starting Server ===","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.244","source":"Logger.js:115","message":"[Server] Init v2.7.1","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.246","source":"Logger.js:115","message":"[Database] absdatabase.sqlite not found at /config/absdatabase.sqlite","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.247","source":"Logger.js:115","message":"[Database] Initializing db at \"/config/absdatabase.sqlite\"","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.262","source":"Logger.js:115","message":"[Database] Db connection was successful","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.616","source":"Logger.js:115","message":"[Database] Db initialized with models: user, library, libraryFolder, book, podcast, podcastEpisode, libraryItem, mediaProgress, series, bookSeries, author, bookAuthor, collection, collectionBook, playlist, playlistMediaItem, device, playbackSession, feed, feedEpisode, setting","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.653","source":"Logger.js:115","message":"[BackupManager] 0 Backups Found","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.653","source":"Logger.js:115","message":"[BackupManager] Auto Backups are disabled","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.653","source":"Logger.js:115","message":"[LogManager] Init current daily log filename: 2024-01-08.txt","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:49.661","source":"Logger.js:115","message":"Listening on port :80","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:51.061","source":"Logger.js:115","message":"[SocketAuthority] Socket Connected 2qmI-cwuPZGQxRkOAAAB","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:42:51.081","source":"Logger.js:127","message":"Cannot validate socket - invalid token","levelName":"ERROR","level":4}
+{"timestamp":"2024-01-08 01:42:54.833","source":"Logger.js:115","message":"[SocketAuthority] Unauth socket 2qmI-cwuPZGQxRkOAAAB disconnected (Reason: transport close)","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:44:29.102","source":"Logger.js:115","message":"[Server] Initializing new server","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:44:34.101","source":"Logger.js:115","message":"[SocketAuthority] Socket Connected of1jL6wMwAo2BxFZAAAD","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:45.483","source":"Logger.js:115","message":"[Watcher] Initializing watcher for \"Dirty Earworms\".","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:45.492","source":"Logger.js:115","message":"[Watcher] \"Dirty Earworms\" Ready","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:51.280","source":"Logger.js:115","message":"[LibraryScanner] Library metadata precedence changed since last scan. From [Unset] to [folderStructure,audioMetatags,nfoFile,txtFiles,opfFile,absMetadata]","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:51.282","source":"Logger.js:115","message":"[LibraryScanner] Starting (forced) library scan 151cae84-c7fa-4151-89da-2d1ab1d73439 for Dirty Earworms","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:51.287","source":"Logger.js:127","message":"Root path has no media folders: /audiobooks","levelName":"ERROR","level":4}
+{"timestamp":"2024-01-08 01:46:51.289","source":"Logger.js:115","message":"[LibraryScanner] Library scan 151cae84-c7fa-4151-89da-2d1ab1d73439 completed in 0:00.0 | 0 Added | 0 Updated | 0 Missing","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:46:51.306","source":"Logger.js:115","message":"[LibraryController] Scan complete","levelName":"INFO","level":2}
+{"timestamp":"2024-01-08 01:49:12.314","source":"Logger.js:115","message":"[SocketAuthority] Socket of1jL6wMwAo2BxFZAAAD disconnected from client \"root\" after 278214ms (Reason: transport close)","levelName":"INFO","level":2}

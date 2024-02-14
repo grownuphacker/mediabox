@@ -189,8 +189,9 @@ services:
     image: plexinc/pms-docker:public
     container_name: plex
     restart: unless-stopped
-    networks:
-      - containernet
+    network_mode: host
+    #networks:
+    #  - containernet
     ports:
       - "32400:32400/tcp"
       - "3005:3005/tcp"
@@ -268,7 +269,7 @@ services:
 
 
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent
+    image: hotio/qbittorrent
     container_name: qbittorrent
     security_opt:
       - no-new-privileges:true
@@ -276,7 +277,7 @@ services:
     networks:
       - containernet
     ports:
-      - "8085:8085"
+      - "8085:8080"
       - 58781:58781 
       - 58781:58781/udp
     volumes:
@@ -287,7 +288,7 @@ services:
       PGID: $PGID
       TZ: $TZ
       UMASK: 002
-      WEBUI_PORT: 8085
+      WEBUI_PORTS: 8085
     labels:
       - homepage.group=Download
       - homepage.name=qBittorrent
@@ -376,18 +377,15 @@ services:
       - homepage.description=Container Log Viewer
   
   portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
-    # command: -H unix:///var/run/docker.sock 
-    # Use Docker Socket Proxy instead for improved security
-    # command: -H tcp://socket-proxy:2375
+    container_name: portainer_agent
+    image: portainer/agent:latest
     networks:
       - containernet
     ports:
-      - 9000:8000
+      - 9001:9001
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro # # Use Docker Socket Proxy instead for improved security
-      - $APPDATA_DIR/portainer/data:/data # Change to local directory if you want to save/transfer config locally
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
     environment:
       PUID: $PUID
       PGID: $PGID
@@ -399,11 +397,6 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=myresolver"
       - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
-      - homepage.group=Utilities
-      - homepage.name=Portainer
-      - homepage.icon=portainer.png
-      - homepage.href=https://portainer.${DOMAIN_NAME}
-      - homepage.description=Docker Overview UI
 
   speedtest-tracker:
       container_name: speedtest-tracker
