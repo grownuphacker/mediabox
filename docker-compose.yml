@@ -13,10 +13,8 @@ secrets:
     file: ${SECRETS_DIR}/cf_api_key.secret
   cf_api_email:
     file: ${SECRETS_DIR}/cf_api_email.secret
-  discord_id:
-    file: ${SECRETS_DIR}/discord_webhook.secret
-  discord_token:
-    file: ${SECRETS_DIR}/discord_token.secret
+  discord_shoutrrr_url:
+    file: ${SECRETS_DIR}/discord_shoutrrr_url.secret
     
 
   
@@ -605,9 +603,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      WATCHTOWER_NOTIFICATION_URL: "discord://${discord_token}@${discord_id}"
-    #https://discord.com/api/webhooks/1224565847742480516/bJg6ug93fvgp2KUBsSwUu1dt_foY8bpC-9ldkfE0gVfm_YPQtdLD2tZsCyMnlNDsnZgH
-    #command: ubuntu-container
-
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_NOTIFICATIONS: shoutrrr
+      WATCHTOWER_NOTIFICATION_URL: /run/secrets/discord_shoutrrr_url
+    secrets:
+      - discord_shoutrrr_url
+    
 volumes:
   speedtest-db:
