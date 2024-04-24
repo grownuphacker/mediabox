@@ -224,18 +224,18 @@ services:
     restart: unless-stopped
     network_mode: host
     #networks:
-    #  - containernet
-    ports:
-      - "32400:32400/tcp"
-      - "3005:3005/tcp"
-      - "8324:8324/tcp"
-      - "32469:32469/tcp"
-      - "1900:1900/udp"
-      - "32410:32410/udp"
-      - "32412:32412/udp"
-      - "32413:32413/udp"
-      - "32414:32414/udp"
-      # - "33400:33400" # If you use Plex Web Tools
+    ##  - containernet
+    #ports:
+    #  - "32400:32400/tcp"
+    #  - "3005:3005/tcp"
+    #  - "8324:8324/tcp"
+    #  - "32469:32469/tcp"
+    #  - "1900:1900/udp"
+    #  - "32410:32410/udp"
+    #  - "32412:32412/udp"
+    #  - "32413:32413/udp"
+    #  - "32414:32414/udp"
+    #  # - "33400:33400" # If you use Plex Web Tools
     devices:
       - /dev/dri:/dev/dri # for hardware transcoding
     volumes:
@@ -246,7 +246,7 @@ services:
     environment:
       TZ: $TZ
       HOSTNAME: "abePlex"
-      PLEX_CLAIM: $PLEX_CLAIM
+      #PLEX_CLAIM: $PLEX_CLAIM
       PLEX_UID: $PUID
       PLEX_GID: $PGID
       ADVERTISE_IP: http://$SERVER_IP:32400/,https://plex.${DOMAIN_NAME}
@@ -608,6 +608,35 @@ services:
       WATCHTOWER_NOTIFICATION_URL: /run/secrets/discord_shoutrrr_url
     secrets:
       - discord_shoutrrr_url
+
+  homeassistant:
+    container_name: homeassistant
+    networks: 
+      - containernet
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - /mnt/NAS/Storage/home-assistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+      - /dev/serial/by-id:/dev/serial/by-id
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    restart: unless-stopped
+    privileged: true
+    #network_mode: host
+    ports:
+      - "8123:8123"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.home-assistant.rule=Host(`home-assistant.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.home-assistant.entrypoints=websecure"
+      - "traefik.http.routers.home-assistant.tls.certresolver=myresolver"
+      - "traefik.http.services.home-assistant.loadbalancer.server.port=8123"
+      - homepage.group=Smarthome
+      - homepage.name=home-assistant
+      - homepage.icon=home-assistant.png
+      - homepage.href=https://home-assistant.${DOMAIN_NAME}
+      - homepage.description=Home Assistant
     
 volumes:
   speedtest-db:
