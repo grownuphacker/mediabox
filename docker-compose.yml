@@ -637,6 +637,8 @@ services:
       - homepage.icon=home-assistant.png
       - homepage.href=https://home-assistant.${DOMAIN_NAME}
       - homepage.description=Home Assistant
+
+    ## Need to enable Trusted Proxies in the configuration.yaml
     
 volumes:
   speedtest-db:
