@@ -26,7 +26,7 @@ services:
     container_name: radarr
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
     networks:
       - containernet
     ports:
@@ -61,7 +61,7 @@ services:
     container_name: sonarr
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
     networks:
       - containernet
     ports:
@@ -96,7 +96,7 @@ services:
     container_name: readarr
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
     networks:
       - containernet
     ports:
@@ -130,7 +130,7 @@ services:
     container_name: overseerr
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
     networks:
       - containernet
     ports:
@@ -161,7 +161,7 @@ services:
     container_name: audiobookshelf
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
     networks:
       - containernet
     environment:
@@ -473,7 +473,7 @@ services:
     container_name: tautulli
     security_opt:
       - no-new-privileges:true
-    restart: "no"
+    restart: unless-stopped
       #network_mode: host
     networks:
       - containernet
@@ -630,7 +630,7 @@ services:
       - "8123:8123"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.home-assistant.rule=Host(`home-assistant.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.home-assistant.rule=(Host(`home-assistant.${DOMAIN_NAME}`) || Host(`h.0g.rip`))"
       - "traefik.http.routers.home-assistant.entrypoints=websecure"
       - "traefik.http.routers.home-assistant.tls.certresolver=myresolver"
       - "traefik.http.services.home-assistant.loadbalancer.server.port=8123"
